@@ -3,6 +3,7 @@
 require 'tty-prompt'
 require 'colorize'
 require_relative 'utils'
+require_relative 'code_generator'
 
 # This module provides functionality to add, rename, and remove services.
 # It interacts with the user using TTY prompt and utilizes the Utils module for encryption.
@@ -30,6 +31,7 @@ module ServiceEditor
     secrets[name] = { secret: encrypted_secret }
     Utils.save_secrets(secrets)
     puts "#{name} added.".green
+    CodeGenerator.generate_code(name, secrets, passphrase, salt)
   end
 
   def self.rename_service(secrets)
