@@ -7,10 +7,16 @@ require_relative 'utils'
 # This module provides functionality to add, rename, and remove services.
 # It interacts with the user using TTY prompt and utilizes the Utils module for encryption.
 module ServiceEditor
+  # Strips terminal escape sequences (e.g. ESC b from Option+Left) and other
+  # control characters that can slip into a typed name and make it untypeable.
+  def self.clean_name(name)
+    name.to_s.gsub(/\e\[[0-9;]*[A-Za-z~]|\e./, '').gsub(/[[:cntrl:]]/, '').strip.downcase
+  end
+
   # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def self.add_service(secrets, passphrase, salt)
     prompt = TTY::Prompt.new
-    name = prompt.ask('Service Name:').downcase
+    name = clean_name(prompt.ask('Service Name:'))
 
     if secrets.key?(name)
       puts "WARNING: Service with name '#{name}' already exists.".yellow
@@ -35,7 +41,7 @@ module ServiceEditor
   def self.rename_service(secrets)
     prompt = TTY::Prompt.new
     old_name = prompt.select('Choose a service to rename:', secrets.keys.sort)
-    new_name = prompt.ask("Enter the new name for '#{old_name}':").downcase
+    new_name = clean_name(prompt.ask("Enter the new name for '#{old_name}':"))
     if secrets[new_name].nil?
       secrets[new_name] = secrets.delete(old_name)
       Utils.save_secrets(secrets)
